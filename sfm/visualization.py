@@ -89,7 +89,7 @@ def plot_reconstruction(points3D, cameras, point_size=2, camera_scale=0.5, title
                     color=points3D[:, 2],  # Color by depth
                     colorscale='Viridis',
                     opacity=0.6,
-                    colorbar=dict(title='Depth (Z)', x=-20 )
+                    showscale=False  
                 ),
                 name=f'3D Points ({len(points3D)})',
                 showlegend=False
