@@ -1,4 +1,4 @@
-from .features import match_image_to_3D
+from .matching import match_image_to_3D
 
 def add_view_incremental(
     view_id,
