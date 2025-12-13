@@ -3,18 +3,18 @@ import numpy as np
 
 def camera_frustum(R, t, scale=0.5, color='blue', name='Camera'):
     """
-    Create a camera frustum for visualization.
-    
-    Args:
-        R: (3, 3) rotation matrix
-        t: (3, 1) or (3,) translation vector
-        scale: size of the frustum
-        color: color of the frustum
-        name: name for the trace
-    
+    Construct a simple 3D camera frustum for visualization.
+
+    Parameters:
+        R, t   : Camera rotation and translation (world ← camera)
+        scale  : Controls frustum size
+        color  : Line color
+        name   : Label for the legend
+
     Returns:
-        Plotly Scatter3d trace
+        A Plotly Scatter3d object representing the frustum edges.
     """
+    
     # Camera center in world coordinates
     t = t.reshape(3, 1)
     C = -R.T @ t
@@ -61,22 +61,24 @@ def camera_frustum(R, t, scale=0.5, color='blue', name='Camera'):
 
 def plot_reconstruction(points3D, cameras, point_size=2, camera_scale=0.5, title='SfM Reconstruction'):
     """
-    Visualize the full incremental SfM reconstruction.
-    
-    Args:
-        points3D: (N, 3) array of 3D points
-        cameras: dict mapping view_id -> {'R': R, 't': t}
-        point_size: size of 3D points
-        camera_scale: scale of camera frustums
-        title: plot title
-    
+    Visualize an incremental SfM reconstruction:
+    - Sparse 3D point cloud
+    - Estimated camera poses as frustums
+
+    Parameters:
+        points3D : (N,3) array of 3D point positions
+        cameras  : dict mapping view_id → {'R': R, 't': t}
+        point_size : Marker size for points
+        camera_scale : Frustum size multiplier
+        title    : Plot title
+
     Returns:
-        Plotly Figure object
+        Plotly Figure object for interactive visualization
     """
     
     traces = []
     
-    # Add 3D points
+    # 3D point cloud
     if len(points3D) > 0:
         traces.append(
             go.Scatter3d(
@@ -96,14 +98,14 @@ def plot_reconstruction(points3D, cameras, point_size=2, camera_scale=0.5, title
             )
         )
     
-    # Color palette for cameras
+    # Camera color palette
     colors = ['red', 'blue', 'green', 'orange', 'purple', 'cyan', 'magenta', 'yellow']
     
-    # Add camera frustums
+    # Add cameras
     for i, (view_id, cam) in enumerate(sorted(cameras.items())):
         color = colors[i % len(colors)]
         
-        # Add frustum
+        # Camera frustum
         frustum = camera_frustum(
             cam['R'], 
             cam['t'], 
@@ -113,7 +115,7 @@ def plot_reconstruction(points3D, cameras, point_size=2, camera_scale=0.5, title
         )
         traces.append(frustum)
         
-        # Add camera center as a point
+        # Camera center marker
         C = -cam['R'].T @ cam['t'].reshape(3, 1)
         C = C.flatten()
         
@@ -129,10 +131,8 @@ def plot_reconstruction(points3D, cameras, point_size=2, camera_scale=0.5, title
             )
         )
     
-    # Create figure
+    # Assemble figure
     fig = go.Figure(data=traces)
-    
-    # Update layout
     fig.update_layout(
         title=title,
         scene=dict(
