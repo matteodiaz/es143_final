@@ -31,12 +31,13 @@ def add_view_incremental(
         4. Update global tracks + point cloud
     """
 
+    # Default reference is the previous view
     if ref_view is None:
-        ref_view = view_id - 1   # natural incremental SFM
+        ref_view = view_id - 1
 
     print(f"\n Adding view {view_id} (ref = {ref_view})")
 
-    # --- Step 1: 2D-3D Matching ---
+   # Match new image features to existing 3D point cloud
     kps_new = video_kps[view_id]
     descs_new = video_descs[view_id]
 
@@ -50,11 +51,12 @@ def add_view_incremental(
 
     print(f"  2D–3D matches: {len(kps_new_matched)}")
 
+    # Need enough correspondences to solve PnP robustly
     if len(kps_new_matched) < min_matches:
         print("  Not enough 2D–3D correspondences for PnP.")
         return points3D, point_descriptors, tracks, kp_to_track, cameras
 
-    # --- Step 2: Pose Estimation ---
+    # Estimate camera pose from 2D–3D correspondences
     R_new, t_new, inliers = estimatePose(
         kps_new_matched,
         X_match,
@@ -70,12 +72,13 @@ def add_view_incremental(
     cameras[view_id] = {"R": R_new, "t": t_new}
     print(f"  Pose OK (inliers: {len(inliers)})")
 
-    # --- Step 3: Triangulate new points ---
+    # Triangulate new points between this view and reference view
     R_ref = cameras[ref_view]["R"]
     t_ref = cameras[ref_view]["t"]
     kps_ref = video_kps[ref_view]
 
-    matches_pair = video_matches[ref_view]  # FIXED
+    # Obtain 2D–2D pairings for triangulation
+    matches_pair = video_matches[ref_view]  
     matches_idx = [(m.queryIdx, m.trainIdx) for m in matches_pair]
 
     X_new, valid_mask = triangulateNewPoints(
@@ -89,7 +92,7 @@ def add_view_incremental(
 
     print(f"  Valid triangulated: {valid_mask.sum()}")
 
-    # --- Step 4: Insert new points into map ---
+    # Insert triangulated points into the reconstruction and update the track/descriptor systems
     num_added = 0
     for idx, ok in enumerate(valid_mask):
         if not ok:
@@ -97,15 +100,16 @@ def add_view_incremental(
 
         kp_ref_idx, kp_new_idx = matches_idx[idx]
 
-        # If this 2D point is already linked to an existing 3D point, update track
+        # If a track already exists for this keypoint in the reference view, simply add the new observation to that track.
         if (ref_view, kp_ref_idx) in kp_to_track:
             track_id = kp_to_track[(ref_view, kp_ref_idx)]
+            
             if (view_id, kp_new_idx) not in tracks[track_id]:
                 tracks[track_id].append((view_id, kp_new_idx))
                 kp_to_track[(view_id, kp_new_idx)] = track_id
             continue
 
-        # Otherwise: new 3D point
+        # Otherwise, create a brand new 3D point and initialize its track
         new_id = len(points3D)
         points3D = np.vstack([points3D, X_new[idx]])
 
@@ -117,6 +121,7 @@ def add_view_incremental(
         kp_to_track[(ref_view, kp_ref_idx)] = new_id
         kp_to_track[(view_id, kp_new_idx)] = new_id
 
+        # Store descriptor associated with this new 3D point
         desc = descs_new[kp_new_idx].astype(np.uint8)
         point_descriptors = np.vstack([point_descriptors, desc[None]])
 
