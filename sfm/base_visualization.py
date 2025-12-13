@@ -1,7 +1,7 @@
 import numpy as np
 import plotly.graph_objects as go
 
-def camera_frustum(R, t, scale=0.2, color='red', name='camera'):
+def base_camera_frustum(R, t, scale=0.2, color='red', name='camera'):
     """
     Create a simple camera frustum for visualization.
     """
@@ -61,11 +61,11 @@ def plot_base_scene(points3D, R2, t2):
     # Camera 1 (origin)
     R1 = np.eye(3)
     t1 = np.zeros((3,1))
-    for tr in camera_frustum(R1, t1, color='green', name='Camera 1'):
+    for tr in base_camera_frustum(R1, t1, color='green', name='Camera 1'):
         fig.add_trace(tr)
 
     # Camera 2
-    for tr in camera_frustum(R2, t2, color='red', name='Camera 2'):
+    for tr in base_camera_frustum(R2, t2, color='red', name='Camera 2'):
         fig.add_trace(tr)
 
     fig.update_layout(
