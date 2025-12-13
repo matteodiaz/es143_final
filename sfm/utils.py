@@ -1,5 +1,7 @@
 import numpy as np
 
+# helper functions from previous classes/labs
+
 def in2hom(X):
     return np.concatenate([X, np.ones((X.shape[0], 1), dtype=np.float32)], axis=1)
 
