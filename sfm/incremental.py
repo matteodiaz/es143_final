@@ -1,4 +1,9 @@
+import numpy as np
+import cv2
+
 from .matching import match_image_to_3D
+from .pose import estimatePose
+from .triangulation import triangulateNewPoints
 
 def add_view_incremental(
     view_id,
