@@ -92,7 +92,7 @@ def plot_reconstruction(points3D, cameras, point_size=2, camera_scale=0.5, title
                     colorbar=dict(title='Depth (Z)')
                 ),
                 name=f'3D Points ({len(points3D)})',
-                showlegend=True
+                showlegend=False
             )
         )
     
